@@ -5,17 +5,13 @@ import java.util.concurrent.Executors;
 public class Lab2 {
     public static void main(String[] args) throws InterruptedException {
 
-        Timer timer1 = new Timer();
-        timer1.start();
+        
         Q1 q1 = new Q1();
-        System.out.println(q1.FindLargestNumber());
-        timer1.end();
-        System.out.println("Sequence:" + timer1.getDuration());
+        System.out.println("Sequence Time"+q1.getMax());
+      
 
         
-        Timer timer2=new Timer();
-        timer2.start();
-        int arr[]= new int[1000000];
+        int arr[]= new int[5000000];
         Random random=new Random();
         for (int i=0; i<arr.length; i++){
         arr[i]=random.nextInt(50000)+1;
@@ -28,32 +24,36 @@ public class Lab2 {
         // q2_b.join();
         // System.out.println(Math.max(q2_a.getMax(), q2_b.getMax()));
 
-        Q2_Executor q2=new Q2_Executor(arr, 4);
+        Q2_Executor q2=new Q2_Executor(arr, 6); // 
         q2.CoccurentArray();
-        System.out.println(q2.getMax());
-        timer2.end();
-        System.out.println("Coccurent:"+timer2.getDuration());
+        System.out.println("Cocurrent Time"+q2.CoccurentArray());
 
     }
 
     static class Q1 {
-        int arr[] = new int[1000000];
-
+        int arr[] = new int[5000000];
         public Q1() {
         };
 
-        public String FindLargestNumber() {
+        public String getMax() {
+            Random random=new Random();
+            for(int i =0; i<arr.length;i++){
+                arr[i]=random.nextInt(50000)+1;
+            }
             int max = arr[0];
-            int index = 0;
+            Timer time=new Timer();
+            time.start();
             for (int i = 1; i < arr.length; i++) {
                 if (arr[i] > max) {
                     max = arr[i];
-                    index = i;
                 }
 
             }
-            return "No: " + index + "; Value: " + max;
+            time.end();
+
+            return time.getDuration()+" Max:"+ max;
         };
+        
     }
 
     static class Q2 extends Thread {
@@ -111,9 +111,11 @@ public class Lab2 {
             this.arr = arr;
             this.num=num;
         }
-        public void CoccurentArray() {
+        public String CoccurentArray() {
             ExecutorService executorService = Executors.newFixedThreadPool(num);
             max=arr[0];
+            Timer timer=new Timer();
+            timer.start();
             for (int i = 1; i < arr.length; i++) {
                 int index = i;
                 executorService.execute(() -> {
@@ -122,11 +124,11 @@ public class Lab2 {
                     }
                 });
             }
-    
+           timer.end();
+           
             executorService.shutdown();
+            return " "+timer.getDuration()+" Max:"+ max;
         }
-        public int getMax(){
-            return max;
-        }
+       
     }
 }
