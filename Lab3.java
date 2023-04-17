@@ -12,7 +12,10 @@ public class Lab3 {
         public Room() {
         };
 
-        public synchronized void GuestEnter() {
+        public synchronized void GuestEnter() throws InterruptedException{
+            while (this.GuestNum.get() >= 6) {
+                wait();
+            }
             this.GuestNum.incrementAndGet();
         }
 
@@ -26,6 +29,7 @@ public class Lab3 {
 
         public synchronized void GuestLeave() {
             this.GuestNum.decrementAndGet();
+            notifyAll();
         }
 
         public AtomicInteger getGuestNum() {
@@ -49,7 +53,7 @@ public class Lab3 {
         public Bank() {
         }
 
-        public synchronized double check() {
+        public  double check() {
             readLock.lock();
             try {
                 System.out.println(account);
@@ -57,7 +61,7 @@ public class Lab3 {
             }finally{readLock.unlock();}
             return this.account;
         }
-        public synchronized double deposit(Double transaction) {
+        public  double deposit(Double transaction) {
             writeLock.lock();
             try {
                 this.account = account + transaction;
@@ -66,7 +70,7 @@ public class Lab3 {
               return transaction;
         }
 
-        public synchronized double withdraw(Double transaction) {
+        public  double withdraw(Double transaction) {
             writeLock.lock();
             try {
                 this.account = account - transaction;
@@ -77,23 +81,21 @@ public class Lab3 {
 
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException,IllegalMonitorStateException {
 
         // 1
-        Object lock = new Object();
         Room room = new Room();
         Random random = new Random();
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 20; i++) {
             Runnable runnable = new Runnable() {
                 public void run() {
                     if (random.nextInt(2) == 0) { // Guest enter
-                        synchronized (lock) {
+                        synchronized (room) {
                             try { // thread for guest
 
-                                while (room.isCleaning() == true || room.getGuestNum().get() > 6) {
-                                    lock.wait();
-                                }
-                                ;
+                                while (room.isCleaning() == true) {
+                                    room.wait();
+                                };
                                 room.GuestEnter();
                                 System.out
                                         .println("Guest " + Thread.currentThread().getName() + " Entered and staying");
@@ -105,12 +107,11 @@ public class Lab3 {
                             }
                         }
                     } else {
-                        synchronized (lock) {
+                        synchronized (room) {
                             try { // Cleaning
                                 while (room.getGuestNum().get() > 0) {
-                                    lock.wait();
-                                }
-                                ;
+                                    room.wait();
+                                };
                                 room.CleanerEnter();
                                 System.out.println(
                                         "Cleaner " + Thread.currentThread().getName() + " Entered and Cleaning");
@@ -124,8 +125,8 @@ public class Lab3 {
                     }
                 }
             };
-            Thread t2 = new Thread(runnable);
-            t2.start();
+            Thread t = new Thread(runnable);
+            t.start();
         }
 
         // 2
