@@ -15,13 +15,13 @@ public class Lab4 {
     public static class Node<T> {
         private T value;
         private final Lock lock = new ReentrantLock();
-        private final Condition valueChange = lock.newCondition();
+        private final Condition vcCondition = lock.newCondition();
 
         public void setValue(T value) {
             lock.lock();
             try {
                 this.value = value;
-                valueChange.signalAll();
+                vcCondition.signalAll();
             } finally {
                 lock.unlock();
             }
@@ -30,10 +30,16 @@ public class Lab4 {
         public void executeOnValue(T desiredValue, Runnable task) {
             lock.lock();
             try {
-                while (!desiredValue.equals(value)) {
-                    valueChange.await();
+                if (value.equals(desiredValue)) {
+                    task.run();
+                    System.out.println("The desired value is found!");
+                } else {
+                    while (!value.equals(desiredValue)) {
+                        vcCondition.await();
+                    }
+                    task.run();
+                    System.out.println("The desired value is found!");
                 }
-                task.run();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             } finally {
